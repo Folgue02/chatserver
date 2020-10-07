@@ -21,9 +21,10 @@ def listen():
 
 
 def send():
-	msg = dumps(message.createPublicMessage(1, input(">>")))
-	print(msg)
-	s.send(bytes(msg, "utf-8"))
+	while True:
+		msg = dumps(message.createPublicMessage(1, input(">>")))
+		print(msg)
+		s.send(bytes(msg, "utf-8"))
 
 
 

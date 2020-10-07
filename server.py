@@ -104,6 +104,7 @@ def handleUserInput(userId: int, userInput: dict):
 		for user in globalVars.userList:
 			globalVars.userList[user]["userSocket"].send(bytes(targetMsg, "utf-8"))
 
+		print(f"[{userInput['author']}]: {userInput['msg']}")
 		return
 
 
@@ -169,4 +170,5 @@ if __name__ == "__main__":
 	# Execute the initialization function.
 	startup()
 	log.printLog(f"Starting server with the following configuration... {globalVars.configFile}")
-	listener()
+	listenerThread = Thread(target=listener, daemon=True)
+	listenerThread.start()
