@@ -1,6 +1,6 @@
 {
     "serveraddr":"127.0.0.1",
-    "serverport": 42069,
+    "serverport": 25565,
     "listenNo":5
 
 }

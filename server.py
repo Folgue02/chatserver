@@ -78,6 +78,7 @@ def startup():
 	try: 
 		globalVars.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		globalVars.soc.bind((globalVars.configFile["serveraddr"], globalVars.configFile["serverport"]))
+		globalVars.soc.listen(globalVars.configFile["listenNo"])
 
 	except Exception as e:
 		log.printError(f"There was an error binding the socket.\nRaw error: ")
@@ -91,6 +92,19 @@ def handleUserInput(userId: int, userInput: dict):
 	# If the message doesn't contain a "type" key, the handler cannot know what to do with the rest of the message.
 	if not "type" in userInput:
 		log.printError(f"The user's ({userId}) input doesn't specify what type of message it is, therefore nothing can be do with it.")
+		return
+
+	msgType = userInput["type"]
+
+	# Public message type
+	if msgType == "pubmsg":
+		# A public message gets sent to all users connected to the server.
+		
+		targetMsg = dumps(message.createPublicMessage(userId, userInput["msg"]))
+		for user in globalVars.userList:
+			globalVars.userList[user]["userSocket"].send(bytes(targetMsg, "utf-8"))
+
+		return
 
 
 
@@ -110,7 +124,7 @@ def listener():
 		# The name its by default assigned to the id.
 
 		# Create the dedicated thread for the user.
-		globalVars.threads[newId] = Thread(target=dedicatedThread, args=(newId), daemon=True)
+		globalVars.threads[newId] = Thread(target=dedicatedThread, args=[newId], daemon=True)
 		globalVars.threads[newId].start()
 		log.printLog(f"Dedicated thread for user '{newId}' has been started.")
 
@@ -131,12 +145,19 @@ def dedicatedThread(userId: int) -> None:
 
 			except JSONDecodeError:
 				log.printError(f"The user '{userId}' just sent an invalid message (cannot be parsed into a dictionary).")
+				del globalVars.userList[userId]
+				del globalVars.threads[userId]
+				log.printLog(f"User with id '{userId}' just sent an invalid message and got kicked out.")
+				c.close()
+				return
 				# Kick the user from the server or ignore this message.
 
 			handleUserInput(userId, userMsg)
 
-		except Exception:
-			log.printError(f"Something happened with the thread of user '{userId}'")
+		except Exception as e:
+			log.printError(f"Something happened with the thread of user '{userId}'. \nRaw error:")
+			traceback.print_exc()
+			return
 
 
 
@@ -147,4 +168,5 @@ def dedicatedThread(userId: int) -> None:
 if __name__ == "__main__":
 	# Execute the initialization function.
 	startup()
-	print(globalVars.configFile)
+	log.printLog(f"Starting server with the following configuration... {globalVars.configFile}")
+	listener()
