@@ -4,7 +4,7 @@ import os
 from json import loads, dumps, JSONDecodeError
 from share import log, message
 import traceback
-
+import servertools
 
 class globalVars:
 	configFile = {}
@@ -100,11 +100,11 @@ def handleUserInput(userId: int, userInput: dict):
 	if msgType == "pubmsg":
 		# A public message gets sent to all users connected to the server.
 		
-		targetMsg = dumps(message.createPublicMessage(userId, userInput["msg"]))
+		targetMsg = dumps(message.createServerPublicMessage(userId, userInput["msg"]))
 		for user in globalVars.userList:
 			globalVars.userList[user]["userSocket"].send(bytes(targetMsg, "utf-8"))
 
-		print(f"[{userInput['author']}]: {userInput['msg']}")
+		print(f"[{userId}]: {userInput['msg']}")
 		return
 
 
@@ -128,6 +128,7 @@ def listener():
 		globalVars.threads[newId] = Thread(target=dedicatedThread, args=[newId], daemon=True)
 		globalVars.threads[newId].start()
 		log.printLog(f"Dedicated thread for user '{newId}' has been started.")
+		servertools.sendGlobalLogMessage(globalVars,f"User with id '{newId}' joined the chat.")
 
 
 
@@ -149,20 +150,22 @@ def dedicatedThread(userId: int) -> None:
 				del globalVars.userList[userId]
 				del globalVars.threads[userId]
 				log.printLog(f"User with id '{userId}' just sent an invalid message and got kicked out.")
-				c.close()
 				return
 				# Kick the user from the server or ignore this message.
 
 			handleUserInput(userId, userMsg)
 
-		except Exception as e:
-			log.printError(f"Something happened with the thread of user '{userId}'. \nRaw error:")
-			traceback.print_exc()
-			return
+
+		except ConnectionResetError:
+			log.printError(f"User '{userId}' has left.")
+			del globalVars.userList[userId]
+			del globalVars.threads[userId]
+			servertools.sendGlobalLogMessage(globalVars , f"User '{userId}' has left.")
+			return	
 
 
 
-			
+
 
 
 

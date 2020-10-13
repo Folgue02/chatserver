@@ -14,15 +14,16 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(("127.0.0.1", config["serverport"]))
 
 def listen():
-	msg = s.recv(2048).decode("utf-8")
+	while True:
+		msg = s.recv(2048).decode("utf-8")
 
-	print(colored(msg, "green"))
+		print(colored(msg, "green"))
 
 
 
 def send():
 	while True:
-		msg = dumps(message.createPublicMessage(1, input(">>")))
+		msg = dumps(message.createPublicMessage(input(">>")))
 		print(msg)
 		s.send(bytes(msg, "utf-8"))
 
