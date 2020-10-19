@@ -5,6 +5,7 @@
 from colorama import init
 from termcolor import colored
 from datetime import datetime
+init()
 
 def _getFormattedDate():
 	return datetime.now().strftime("%H:%M:%S")

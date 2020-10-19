@@ -6,6 +6,9 @@ from share import log, message
 import traceback
 import servertools
 
+
+
+
 class globalVars:
 	configFile = {}
 	configTemplate = {"serveraddr":str, "serverport":int, "listenNo":int}
