@@ -1,25 +1,18 @@
-from thrading import Thread
-from tkinter import *
-
+from clientlib import client_gui as cg
+from threading import Thread
 
 
 class variables:
-    targetSocket = "127.0.0.1"
-    targetPort = 25565
+    pass
 
-
-main = Tk()
-
-
-
-
-main.geometry("800x600")
+def startup():
+    """
+    Its the first thing to be executed
+    """
 
 
 
-
-
-main.mainloop()
+    cg.askForServer().window.mainloop()
 
 
 
@@ -29,10 +22,4 @@ main.mainloop()
 
 
 
-
-
-
-
-
-
-
+startup()

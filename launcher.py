@@ -48,6 +48,29 @@ for command in arg:
         os.system("start python -i server.py")
         continue
 
+
+    if command.startswith("client"):
+        if command.startswith("client=") and len(command) > len("client="):
+            foo = command[len("client="):]
+            print(command[len("client="):])
+
+            try:
+                foo = int(foo)
+            except Exception:
+                print(f"The N specified its not valid. ({foo})")
+            
+            for x in range(foo):
+                os.system("start python client.pyw")
+                continue
+
+            continue
+
+        else:
+            os.system("start python client.pyw")
+            continue
+
+
+
     if command.startswith("testclient"):
         if command.startswith("testclient=") and len(command) > len("testclient="):
             foo = command[len("testclient="):]
