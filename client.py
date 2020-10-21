@@ -1,11 +1,14 @@
 from clientlib import client_gui as cg
+from share.log import noColors
+from share import message
+
 from threading import Thread
 import socket
 from json import loads, dumps, JSONDecodeError
 import os
 from sys import argv
-from share.log import noColors
 from time import sleep
+
 
 class variables:
     serverAddr = "localhost"
@@ -25,9 +28,9 @@ class functions:
 
     @staticmethod
     def addOutput(string):
-        variables.mainWindow.chatOutput.yview_moveto(1)
-        variables.mainWindow.chatOutput.insert(0,"\n" + string)
-
+        print(string)
+        variables.window.chatOutput.yview_moveto(1)
+        variables.window.chatOutput.insert("end","\n" + string)
 
 
     @staticmethod
@@ -40,6 +43,7 @@ class functions:
             return
         
         else:
+            
             if msg["type"] == "pubmsg":
                 functions.addOutput(f"[{noColors._getFormattedDate()} // {msg['authorName']}@{msg['authorId']}]: {msg['msg']}")
                 return
@@ -56,43 +60,34 @@ class functions:
     @staticmethod
     def listener():
         while True:
-            msg = variables.soc.recv(5000)
-
+            msg = variables.soc.recv(1024).decode()
             try:
                 msg = loads(msg)
+                functions.recieveMessage(msg)
             
             except JSONDecodeError:
+                print(3)
                 functions.addOutput(noColors.createError("The server has sent an invalid type of message that cannot be decoded."))
                 continue
 
+    @staticmethod
+    def sender(event=None):
+        # Simplified
+        msg = variables.window.textBox.get()
+        variables.window.textBox.delete(0, "end")
+        variables.soc.send(bytes(dumps(message.createPublicMessage(msg)), "utf-8"))
+        print("Message sent: " + msg)
 
 
-                
-def startup():
-    """
-    This is the first thing to be executed
-    """
-    # Check if debug mode its activated
-    if "debug" in argv:
-        variables.DEBUG = True
-
-    serverInfo = {"serveraddr":"127.0.0.1", "serverport":25565}
-
-    # Create the mainwindow of the client
-    variables.mainWindow = cg.window()
-    print("sd")
-
-    variables.mainWindow.show()
-    print("sd")
+if __name__ == "__main__":
     # Create the socket
     variables.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # Ask for the server
     while True:
-        """
+        
         foo = cg.askForServer()
         serverInfo = foo.show()
-        """
+        
 
         variables.serverAddr =  serverInfo["serveraddr"]
         variables.serverPort =  serverInfo["serverport"]
@@ -102,16 +97,16 @@ def startup():
         except Exception:
             cg.errorWindow("An error has occurred while trying to connect to the server.").show()
             continue
+    
 
+    variables.window = cg.window()
+
+
+    # Start the threads
     variables.listener = Thread(target=functions.listener, daemon=True)
     variables.listener.start()
 
-    
-
-
-
-
-
-
-
-startup()
+    # bind textbox to the function
+    variables.window.textBox.bind("<Return>", func=functions.sender)
+    variables.window.sendButton.config(command=functions.sender)
+    variables.window.show()

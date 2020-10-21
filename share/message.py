@@ -6,8 +6,10 @@
 # Server messages -> servermsg
 
 
-def createServerPublicMessage(authorId: str, message: str) -> dict:
-	return {"type":"pubmsg", "author":authorId, "msg":message}
+def createServerPublicMessage(authorId: str, authorName: str, message: str) -> dict:
+	return {"type":"pubmsg", "authorId":authorId, "authorName":authorName, "msg":message}
+
+
 
 def createPublicMessage(msg: str) -> dict:
 	return {"type":"pubmsg", "msg":msg}

@@ -60,13 +60,13 @@ for command in arg:
                 print(f"The N specified its not valid. ({foo})")
             
             for x in range(foo):
-                os.system("start python client.pyw")
+                os.system("start python client.py")
                 continue
 
             continue
 
         else:
-            os.system("start python client.pyw")
+            os.system("start python client.py")
             continue
 
 

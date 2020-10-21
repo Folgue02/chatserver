@@ -48,7 +48,6 @@ class window:
 
         # Change the colors of the widgets to the defaults
         self.changeStyle(self.defaultStyle)
-        self.main.mainloop()
 
     def show(self):
         self.main.mainloop()

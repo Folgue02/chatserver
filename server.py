@@ -103,7 +103,7 @@ def handleUserInput(userId: int, userInput: dict):
 	if msgType == "pubmsg":
 		# A public message gets sent to all users connected to the server.
 		
-		targetMsg = dumps(message.createServerPublicMessage(userId, userInput["msg"]))
+		targetMsg = dumps(message.createServerPublicMessage(userId, globalVars.userList[userId]["name"],userInput["msg"]))
 		for user in globalVars.userList:
 			globalVars.userList[user]["userSocket"].send(bytes(targetMsg, "utf-8"))
 
