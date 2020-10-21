@@ -1,6 +1,6 @@
 import tkinter
 from json import loads
-
+from tkinter.font import Font
 class window:
     def __init__(self):
         self.main = tkinter.Tk()
@@ -48,8 +48,10 @@ class window:
 
         # Change the colors of the widgets to the defaults
         self.changeStyle(self.defaultStyle)
+        self.main.mainloop()
 
-
+    def show(self):
+        self.main.mainloop()
 
     def changeStyle(self, newStyle: dict) -> None:
         """
@@ -69,47 +71,57 @@ class errorWindow:
     def __init__(self,  errorMsg:str ,windowTitle:str="Error!"):
         self.window = tkinter.Tk()
         self.window.title(windowTitle)
+        self.window.minsize(300, 100)
+        self.window.resizable(0,0)
 
         self.message = tkinter.Label(self.window, text=errorMsg)
-        self.message.pack(side=tkinter.CENTER, pady=10)
+        self.message.pack(anchor=tkinter.CENTER, pady=10)
+        self.message.configure(font="helvetica")
 
         # Continue button
-        self.button = tkinter.Button(self.window, text="Accept")
-        self.button.pack(side=tkinter.CENTER, pady=10)
+        self.button = tkinter.Button(self.window, text="Accept", command=lambda: self.window.destroy())
+        self.button.pack(anchor=tkinter.CENTER, pady=10)
+        self.button.configure(font=Font(size=15))
 
 
     def show(self):
-        self.mainloop()
-        
+        self.window.mainloop()
+
 
 
 
 
 class askForServer:
     def __init__(self):
-        self.window = tkinter.Tk()
-        self.window.title("Enter credentials for the joining a server.")
-        self.window.resizable(False, False)
+        self._information = {}
+        self.root = tkinter.Tk()
+        self.root.title("Enter credentials for the joining a server.")
+        self.root.resizable(False, False)
 
         # Labels
-        self.serverLabel = tkinter.Label(self.window, text="Server address")
+        self.serverLabel = tkinter.Label(self.root, text="Server address")
         self.serverLabel.grid(column=0, row=0, padx=10, pady=5)
         
-        self.portLabel = tkinter.Label(self.window, text="Server port")
+        self.portLabel = tkinter.Label(self.root, text="Server port")
         self.portLabel.grid(column=0, row=1, padx=10, pady=5)
 
         # Text fields
-        self.server = tkinter.Entry(self.window)
+        self.server = tkinter.Entry(self.root)
         self.server.grid(column=1, row=0, padx=10, pady=5)
 
-        self.port = tkinter.Entry(self.window)
+        self.port = tkinter.Entry(self.root)
         self.port.grid(column=1, row=1, padx=10, pady=5)
 
-        self.acceptButton = tkinter.Button(self.window, text="Join server.")
+        self.acceptButton = tkinter.Button(self.root, text="Join server.", command=self._return)
+        self.acceptButton.grid()
 
 
+    def show(self) -> dict:
+        self.root.mainloop()
+        return self._information
 
-    def _returnContent(self):
+    def _return(self):
+
         information = {"serveraddr":"", "serverport":0, "userName":""}
 
         # serveraddr
@@ -121,7 +133,13 @@ class askForServer:
         try:
             information["serverport"]  = int(information["serverport"])
         except Exception:
+            errorWindow("The port of the server specified its invalid.").show()
+            return None
 
+        # If everything went right, this will destroy the root, and the show() function will continue and return the
+        # information specified.
+        self.root.destroy()
+        self._information = information
 
 
 

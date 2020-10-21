@@ -20,3 +20,23 @@ def printWarn(msg):
 
 def printError(msg):
 	print(colored(f"[{_getFormattedDate()} // ERROR]: {msg}", "red"))
+
+class noColors:
+	
+	def _getFormattedDate():
+		return datetime.now().strftime("%H:%M:%S")
+
+
+	@staticmethod
+	def createLog(msg):
+		return f"[{noColors._getFormattedDate()} // LOG]: {msg}"
+
+
+	@staticmethod
+	def createWarn(msg):
+		return f"[{noColors._getFormattedDate()} // WARN]: {msg}"
+
+
+	@staticmethod
+	def createError(msg):
+		return f"[{noColors._getFormattedDate()} // ERROR]: {msg}"
