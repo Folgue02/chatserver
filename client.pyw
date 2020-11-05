@@ -15,6 +15,7 @@ class variables:
     serverPort = 25565
     DEBUG = False
     users = {}
+    bufferSize = 512000
 
 
 
@@ -43,24 +44,44 @@ class functions:
             return
         
         else:
+            if msg["type"] == "userlist":
+                variables.window.userList.delete(0, "end")
+                variables.users = msg["users"]
+                for user in msg["users"]:
+                    variables.window.userList.insert("end", str(msg["users"][user])  + "#" + str(user))
+
+
             
-            if msg["type"] == "pubmsg":
-                functions.addOutput(f"[{noColors._getFormattedDate()} // {msg['authorName']}@{msg['authorId']}]: {msg['msg']}")
-                return
+            elif msg["type"] == "pubmsg":
+                functions.addOutput(f"[{noColors._getFormattedDate()} // {msg['authorName']}#{msg['authorId']}]: {msg['msg']}")
 
             elif msg["type"] == "servermsg":
                 functions.addOutput(f"[{noColors._getFormattedDate()} // SERVER]: {msg['msg']}")
-                return
+
+            elif msg["type"] == "servererror":
+                functions.addOutput(f"[{noColors._getFormattedDate()} // SERVER ERROR]: {msg['msg']}")
+            
+            elif msg["type"] == "privmsg":
+                functions.addOutput(f"[{noColors._getFormattedDate()} // PRIVATE MESSAGE FROM {msg['authorName']}#{msg['authorName']}]: {msg['msg']}")
 
             else:
                 functions.addOutput(noColors.createWarn(f"The server has sent a message of an unknown type. ('{msg['type']}')"))
 
 
+    @staticmethod
+    def listWorker():
+        """
+        Refreshes the user list
+        """
+        while True:
+            sleep(5)
+            variables.soc.send(bytes(dumps(message.createInfoRequest("userlist")),"utf-8"))
+
 
     @staticmethod
     def listener():
         while True:
-            msg = variables.soc.recv(1024).decode()
+            msg = variables.soc.recv(variables.bufferSize).decode()
             try:
                 msg = loads(msg)
                 functions.recieveMessage(msg)
@@ -68,15 +89,54 @@ class functions:
             except JSONDecodeError:
                 print(3)
                 functions.addOutput(noColors.createError("The server has sent an invalid type of message that cannot be decoded."))
+                print(msg)
                 continue
 
     @staticmethod
     def sender(event=None):
         # Simplified
-        msg = variables.window.textBox.get()
+
+        # Get the text from the textbox and clear it
+        msg = variables.window.textBox.get().strip()
         variables.window.textBox.delete(0, "end")
+
+        # In case that its a command
+        if msg.startswith("/"):
+            command = ""
+            pars = []
+            foo = ""
+            quoteStatus = False
+
+
+            msg += " "
+            
+            for char in msg[1:]:
+                if char == " " and not quoteStatus:
+                    # If the command haven't been recognized yet
+                    if command == "":
+                        command = foo
+                        foo = ""
+                        continue
+
+                    else:
+                        pars.append(foo)
+                        foo = ""
+                        continue
+
+                if char == "\"" or char == "'":
+                    quoteStatus = not quoteStatus
+                    continue
+
+                else:
+                    foo += char
+
+            variables.soc.send(bytes(dumps(message.createCommandMessage(command, pars)), "utf-8"))
+            return
+
+
+
+        
         variables.soc.send(bytes(dumps(message.createPublicMessage(msg)), "utf-8"))
-        print("Message sent: " + msg)
 
 
 if __name__ == "__main__":
@@ -105,6 +165,8 @@ if __name__ == "__main__":
     # Start the threads
     variables.listener = Thread(target=functions.listener, daemon=True)
     variables.listener.start()
+    variables.listWorker = Thread(target=functions.listWorker, daemon=True)
+    variables.listWorker.start()
 
     # bind textbox to the function
     variables.window.textBox.bind("<Return>", func=functions.sender)

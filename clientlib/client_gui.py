@@ -104,12 +104,19 @@ class askForServer:
         self.portLabel = tkinter.Label(self.root, text="Server port")
         self.portLabel.grid(column=0, row=1, padx=10, pady=5)
 
+        self.nameLabel = tkinter.Label(self.root, text="User name")
+        self.nameLabel.grid(column=0, row=2, padx=10, pady=5)
+
         # Text fields
         self.server = tkinter.Entry(self.root)
         self.server.grid(column=1, row=0, padx=10, pady=5)
 
         self.port = tkinter.Entry(self.root)
         self.port.grid(column=1, row=1, padx=10, pady=5)
+
+        self.name = tkinter.Entry(self.root)
+        self.name.grid(column=1, row=2, padx=10, pady=5)
+
 
         self.acceptButton = tkinter.Button(self.root, text="Join server.", command=self._return)
         self.acceptButton.grid()
@@ -134,6 +141,14 @@ class askForServer:
         except Exception:
             errorWindow("The port of the server specified its invalid.").show()
             return None
+
+        # username
+        information["name"] = self.name.get()
+
+        if len(information["name"]) > 20:
+            errorWindow("The name cannot be longer than 20 characters.").show()
+            return None
+
 
         # If everything went right, this will destroy the root, and the show() function will continue and return the
         # information specified.

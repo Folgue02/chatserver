@@ -8,6 +8,36 @@ import servertools
 
 
 
+class commands:
+	@staticmethod
+	def changeName(pars, userId, userList):
+		if len(pars) < 1:
+			globalVars.sendMessage(userId, message.createServerErrorResponse("There wasn't a new nickname specified."))
+		
+		else:
+			servertools.sendGlobalLogMessage(globalVars, f"{globalVars.getUserName(userId)}#{userId} has change its name to '{pars[0]}'")
+			globalVars.userList[userId]["name"] = pars[0]
+
+	@staticmethod
+	def sendPrivateMessage(pars, userId, userList):
+		if len(pars) != 2:
+			globalVars.userList[userId]["userSocket"].send(bytes(dumps(message.createServerErrorResponse("Wrong number of parameters specified.")), "utf-8"))
+			
+		else:
+			try:
+				target = int(pars[0])
+			except TypeError:
+				globalVars.sendMessage(userId, message.createServerErrorResponse("You didn't specify a valid Id."))
+			
+			if not target in globalVars.userList:
+				globalVars.sendMessage(userId, message.createServerErrorResponse("There is no user related to such id."))
+				return
+			
+			globalVars.sendMessage(target, message.createPrivateMessage(pars[1], userId, globalVars.getUserName(userId)))
+			
+
+
+
 
 class globalVars:
 	configFile = {}
@@ -15,9 +45,10 @@ class globalVars:
 	userList = {}
 	lastId = 0
 	threads = {}
-	msgSize = 2048
-
-
+	msgSize = 512000
+	commands = {"chnick":commands.changeName, "msg":commands.sendPrivateMessage}
+	sendMessage = lambda userid, message: globalVars.userList[userid]["userSocket"].send(bytes(dumps(message), "utf-8"))
+	getUserName = lambda userid: globalVars.userList[userid]["name"]
 
 
 def startup():
@@ -83,7 +114,7 @@ def startup():
 		globalVars.soc.bind((globalVars.configFile["serveraddr"], globalVars.configFile["serverport"]))
 		globalVars.soc.listen(globalVars.configFile["listenNo"])
 
-	except Exception as e:
+	except Exception:
 		log.printError(f"There was an error binding the socket.\nRaw error: ")
 		traceback.print_exc()
 		exit()
@@ -109,6 +140,27 @@ def handleUserInput(userId: int, userInput: dict):
 
 		print(f"[{userId}]: {userInput['msg']}")
 		return
+	
+	if msgType == "request":
+		if userInput["target"] == "userlist":
+			globalVars.userList[userId]["userSocket"].send(bytes(dumps(message.createUserlistResponse(globalVars.userList)), "utf-8"))
+			return
+		
+		else:
+			log.printError(f"User with id '{userId}' has made a wrong request, and nothing will be returned. (request's target: '{userInput['target']}')")
+			return
+
+	if msgType == "command":
+		command = userInput["command"]
+
+		if not command in globalVars.commands:
+			globalVars.userList[userId]["userSocket"].send(bytes(dumps(message.createServerErrorResponse(f"There isn't any command related to  '{command}'")), "utf-8"))
+			return
+
+		else:
+			globalVars.commands[command](userInput["parameters"], userId, globalVars.userList)
+			return
+
 
 
 
