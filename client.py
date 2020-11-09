@@ -16,9 +16,67 @@ class variables:
     DEBUG = False
     users = {}
     bufferSize = 512000
+    lastOrder = None
+
+
+class inputRelatedFunctions:
+    @staticmethod
+    def iterateOrdersUp(event):
+        # Changes the content of the textBox to what was the last message sent
+        
+        # There isn't a last order
+        if variables.lastOrder == "" or variables.lastOrder == None:
+            return
+        # Removes what's in the box and inserts what was the last thing written in the box and sent
+        variables.window.textBox.delete(0, "end")
+        variables.window.textBox.insert(0, variables.lastOrder)    
+
+    @staticmethod
+    def sender(event=None):
+
+        # Get the text from the textbox and clear it
+        msg = variables.window.textBox.get().strip()
+        variables.window.textBox.delete(0, "end")
+
+        variables.lastOrder = msg
+
+        # In case that its a command
+        if msg.startswith("/"):
+            command = ""
+            pars = []
+            foo = ""
+            quoteStatus = False
+
+
+            msg += " "
+            
+            for char in msg[1:]:
+                if char == " " and not quoteStatus:
+                    # If the command haven't been recognized yet
+                    if command == "":
+                        command = foo
+                        foo = ""
+                        continue
+
+                    else:
+                        pars.append(foo)
+                        foo = ""
+                        continue
+
+                if char == "\"" or char == "'":
+                    quoteStatus = not quoteStatus
+                    continue
+
+                else:
+                    foo += char
+
+            variables.soc.send(bytes(dumps(message.createCommandMessage(command, pars)), "utf-8"))
+            return
 
 
 
+        
+        variables.soc.send(bytes(dumps(message.createPublicMessage(msg)), "utf-8"))
 
 
 
@@ -94,7 +152,6 @@ class functions:
 
     @staticmethod
     def sender(event=None):
-        # Simplified
 
         # Get the text from the textbox and clear it
         msg = variables.window.textBox.get().strip()
@@ -170,6 +227,7 @@ if __name__ == "__main__":
     variables.listWorker.start()
 
     # bind textbox to the function
-    variables.window.textBox.bind("<Return>", func=functions.sender)
-    variables.window.sendButton.config(command=functions.sender)
+    variables.window.textBox.bind("<Return>", func=inputRelatedFunctions.sender)
+    variables.window.textBox.bind("<Shift-Up>", func=inputRelatedFunctions.iterateOrdersUp)
+    variables.window.sendButton.config(command=inputRelatedFunctions.sender)
     variables.window.show()
