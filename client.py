@@ -62,7 +62,7 @@ class functions:
                 functions.addOutput(f"[{noColors._getFormattedDate()} // SERVER ERROR]: {msg['msg']}")
             
             elif msg["type"] == "privmsg":
-                functions.addOutput(f"[{noColors._getFormattedDate()} // PRIVATE MESSAGE FROM {msg['authorName']}#{msg['authorName']}]: {msg['msg']}")
+                functions.addOutput(f"[{noColors._getFormattedDate()} // PRIVATE MESSAGE FROM {msg['authorName']}#{msg['authorId']}]: {msg['msg']}")
 
             else:
                 functions.addOutput(noColors.createWarn(f"The server has sent a message of an unknown type. ('{msg['type']}')"))
@@ -153,9 +153,10 @@ if __name__ == "__main__":
         variables.serverPort =  serverInfo["serverport"]
         try:
             variables.soc.connect((variables.serverAddr, variables.serverPort))
+            variables.soc.send(bytes(dumps(message.createProfMsg(serverInfo["name"])), "utf-8"))
             break
-        except Exception:
-            cg.errorWindow("An error has occurred while trying to connect to the server.").show()
+        except Exception as e:
+            cg.errorWindow(f"An error has occurred while trying to connect to the server.\n{e}").show()
             continue
     
 

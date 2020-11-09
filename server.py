@@ -5,8 +5,8 @@ from json import loads, dumps, JSONDecodeError
 from share import log, message
 import traceback
 import servertools
-
-
+from sys import argv
+from collections import Counter
 
 class commands:
 	@staticmethod
@@ -61,7 +61,7 @@ def startup():
 	
 	configFile = None
 	if os.path.isfile("config.json"):
-		log.printLog("Configuration file founded, reading configuration file...")
+		log.printLog("Configuration file found, reading configuration file...")
 		try:
 			foo = open("config.json", "r").read()
 			foo = loads(foo)
@@ -92,6 +92,9 @@ def startup():
 			log.printError(f"The configuration file it's corrupted or it's invalid, setting a default configuration.")
 
 
+
+
+
 	# In case that the configuration file wasn't found, or configFile stills being set to "None"
 	if configFile == None or not os.path.isfile("config.json"):
 		log.printWarn("Configuration file not found in the directory, or if it was found, it was invalid. Setting a default configuration.")
@@ -101,6 +104,39 @@ def startup():
 	# Set the configuration
 	globalVars.configFile = configFile
 	log.printLog("Configuration loaded succesfully.")
+
+
+	# Parse arguments
+	for arg in argv:
+
+		if arg.startswith("--"):
+			arg = arg[2:]
+
+			if arg == "no-config-file":
+				pass # Gotta do something here
+
+		# Setting
+		elif "=" in arg:
+			
+			# Non valid setting (wrong position for the equal or multiple equals)
+			if arg.startswith("=") or arg.endswith("=") or Counter(arg)["="] != 1:
+				log.printWarn(f"Cannot parse into the configuration file the following setting due to a syntax error: '{arg}'")
+				continue
+
+			key = arg[:arg.find("=")]
+			value = arg[arg.find("=")+1:]
+
+			# Check if its an integer
+			try:
+				value = int(value)
+			
+			except Exception:
+				pass
+			
+			globalVars.configFile[key] = value
+
+		else:
+			continue
 
 
 	# Bind socket
@@ -160,6 +196,11 @@ def handleUserInput(userId: int, userInput: dict):
 		else:
 			globalVars.commands[command](userInput["parameters"], userId, globalVars.userList)
 			return
+
+	if msgType == "profmsg":
+		globalVars.userList[userId]["name"] = userInput["name"]
+
+	
 
 
 

@@ -5,6 +5,7 @@ class window:
     def __init__(self):
         self.main = tkinter.Tk()
         self.main.title("Chat client")
+        self.main.minsize(300,200)
 
 
         self.defaultStyle = {
@@ -67,11 +68,12 @@ class window:
 
 
 class errorWindow:
-    def __init__(self,  errorMsg:str ,windowTitle:str="Error!"):
+    def __init__(self,  errorMsg:str, windowTitle:str="Error!"):
         self.window = tkinter.Tk()
         self.window.title(windowTitle)
-        self.window.minsize(300, 100)
+        self.window.minsize(800, 600)
         self.window.resizable(0,0)
+
 
         self.message = tkinter.Label(self.window, text=errorMsg)
         self.message.pack(anchor=tkinter.CENTER, pady=10)
