@@ -17,13 +17,12 @@ class variables:
     users = {}
     bufferSize = 512000
     lastOrder = None
-
+    soc = None # When the client its not connected its default value its Noneº
 
 class inputRelatedFunctions:
     @staticmethod
     def iterateOrdersUp(event):
         # Changes the content of the textBox to what was the last message sent
-        
         # There isn't a last order
         if variables.lastOrder == "" or variables.lastOrder == None:
             return
@@ -78,6 +77,47 @@ class inputRelatedFunctions:
         
         variables.soc.send(bytes(dumps(message.createPublicMessage(msg)), "utf-8"))
 
+class menuFuncs:
+    @staticmethod
+    def connectToServer(e=None):
+        variables.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        foo = cg.askForServer()
+
+        try:
+            serverInfo = foo.show()
+
+
+        except Exception:
+            variables.soc = None
+            return
+
+        functions.addOutput(noColors.createLog(f"Connecting to the server ({serverInfo['serveraddr']}, {serverInfo['serverport']})..."))
+        try:
+            variables.soc.connect((serverInfo["serveraddr"], serverInfo["serverport"]))
+            variables.soc.send(bytes(dumps(message.createProfMsg(serverInfo["name"])), "utf-8"))
+        except Exception as e:
+            cg.errorWindow(f"An error has occurred while trying to connect to the server.\n{e}").show()
+            variables.soc = None
+            return
+
+        variables.window.textBox.config(state="normal")
+        variables.window.sendButton.config(state="normal")
+        functions.addOutput(noColors.createLog("Connection stablished."))
+
+        
+    @staticmethod
+    def disconnectFromServer(e=None):
+        if variables.soc == None:
+            functions.addOutput(noColors.createError("You need to be connected to a server to perform this action."))
+            return
+        
+        variables.soc.close()
+        variables.soc = None
+        variables.window.textBox.config(state="disabled")
+        variables.window.sendButton.config(state="disabled")
+        functions.addOutput(noColors.createLog("Connection with the server closed."))
+        
 
 
 class functions:
@@ -91,7 +131,7 @@ class functions:
         variables.window.chatOutput.yview_moveto(1)
         variables.window.chatOutput.insert("end","\n" + string)
 
-
+class core:
     @staticmethod
     def recieveMessage(msg: dict):
         if not "type" in msg:
@@ -127,12 +167,12 @@ class functions:
 
 
     @staticmethod
-    def listWorker():
+    def update(delay):
         """
         Refreshes the user list
         """
         while True:
-            sleep(5)
+            sleep(delay)
             variables.soc.send(bytes(dumps(message.createInfoRequest("userlist")),"utf-8"))
 
 
@@ -142,7 +182,7 @@ class functions:
             msg = variables.soc.recv(variables.bufferSize).decode()
             try:
                 msg = loads(msg)
-                functions.recieveMessage(msg)
+                core.recieveMessage(msg)
             
             except JSONDecodeError:
                 print(3)
@@ -197,37 +237,18 @@ class functions:
 
 
 if __name__ == "__main__":
-    # Create the socket
-    variables.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    while True:
-        
-        foo = cg.askForServer()
-        serverInfo = foo.show()
-        
-
-        variables.serverAddr =  serverInfo["serveraddr"]
-        variables.serverPort =  serverInfo["serverport"]
-        try:
-            variables.soc.connect((variables.serverAddr, variables.serverPort))
-            variables.soc.send(bytes(dumps(message.createProfMsg(serverInfo["name"])), "utf-8"))
-            break
-        except Exception as e:
-            cg.errorWindow(f"An error has occurred while trying to connect to the server.\n{e}").show()
-            continue
-    
-
     variables.window = cg.window()
-
-
-    # Start the threads
-    variables.listener = Thread(target=functions.listener, daemon=True)
-    variables.listener.start()
-    variables.listWorker = Thread(target=functions.listWorker, daemon=True)
-    variables.listWorker.start()
-
     # bind textbox to the function
     variables.window.textBox.bind("<Return>", func=inputRelatedFunctions.sender)
     variables.window.textBox.bind("<Shift-Up>", func=inputRelatedFunctions.iterateOrdersUp)
     variables.window.sendButton.config(command=inputRelatedFunctions.sender)
+    variables.window.textBox.config(state="disabled")
+    variables.window.sendButton.config(state="disabled")
+
+    # Add the menu bar
+
+    if variables.soc == None:
+        functions.addOutput(noColors.createError("You are currently not connected to any server."))
+
+
     variables.window.show()

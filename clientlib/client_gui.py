@@ -25,6 +25,10 @@ class window:
         self.upperSide = tkinter.Frame(self.main)
         self.upperSide.pack(fill=tkinter.BOTH, expand=1)
 
+        # Menu
+        self.barMenu = tkinter.Menu(self.main)
+        # This part its not initialized here, and will be initialized in the script that controls the gui
+
 
         # Bottom frame
         self.bottomSide = tkinter.Frame(self.main)
@@ -124,7 +128,10 @@ class askForServer:
         self.acceptButton.grid()
 
 
+
+
     def show(self) -> dict:
+        self.root.protocol("WM_DELETE_WINDOW", self._triggerError)
         self.root.mainloop()
         return self._information
 
@@ -157,7 +164,8 @@ class askForServer:
         self.root.destroy()
         self._information = information
 
-
+    def _triggerError(self):
+        raise Exception("The window was closed manually.")
 
 
 
