@@ -22,7 +22,7 @@ def printError(msg):
 	print(colored(f"[{_getFormattedDate()} // ERROR]: {msg}", "red"))
 
 class noColors:
-	
+	@staticmethod
 	def _getFormattedDate():
 		return datetime.now().strftime("%H:%M:%S")
 
